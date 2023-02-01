@@ -67,3 +67,17 @@ print(c)
 print(type(a))
 print(type(b))
 print(type(c))
+
+
+#Exercise:
+#1
+x = 5
+x = float(x)
+
+#2
+x = 5.5
+x = int(x)
+
+#3
+x = 5
+x = complex(x)
