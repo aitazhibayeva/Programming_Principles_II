@@ -1,144 +1,182 @@
-import pygame
 import random
+import pygame as pg
+# Initializing 
+pg.init()
+# Screen 
+WIDTH = 400
+HEIGHT = 600
+SURF = pg.display.set_mode((WIDTH, HEIGHT))
+pg.display.set_caption("Street Racer")
+# Colors 
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+RED = (255, 255, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
 
-# Initializing
-pygame.init()
+clock = pg.time.Clock()
+# Background 
+bg = pg.image.load("tsis8\image\AnimatedStreet.png")
+# Font 
+score_font = pg.font.SysFont("Roboto-Bold .ttf", 50, True, True)
+big_font = pg.font.SysFont("Roboto-Bold .ttf", 70, True, False)
+rest_font = pg.font.SysFont("Roboto-Bold .ttf", 50, False, False)
+restart = rest_font.render("Press R to restart", True, BLACK)
+game_over = big_font.render("GAME OVER", True, BLACK)
+# Variables 
+paused = False
+STEP = 5
+# Classes 
 
-# Display
-screen = pygame.display.set_mode((1000, 800))
-clock = pygame.time.Clock()
-menue = pygame.Surface((200, 800))
-#  Instead of (x, x, x) we can use named color
-menue.fill('skyblue')
+class Player(pg.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pg.image.load("tsis8\image\Player.png")
+        self.rect = self.image.get_rect()
+        self.rect.center = (160, 520)
 
-# Variables
-p_f = 1
-f = 1
-c = 'black'  
-d = 2
-running = True
+    def update(self):
+        pressed_keys = pg.key.get_pressed()
+        if self.rect.left > 0:
+            if pressed_keys[pg.K_LEFT]:
+                self.rect.move_ip(-STEP, 0)
 
+        if self.rect.right < WIDTH:
+            if pressed_keys[pg.K_RIGHT]:
+                self.rect.move_ip(STEP, 0)
 
-class Button(pygame.sprite.Sprite):
-    # Buttons
-    def __init__(self, flag, img, x, y):
-        pygame.sprite.Sprite.__init__(self)
-        self.flag = flag
-        if flag == 0:
-            self.img = pygame.Surface((70, 70))
-            self.c = img
-            self.img.fill(self.c)
-        elif self.flag == 2:
-            self.img = pygame.Surface((70, 70))
-            self.img.fill((255, 255, 255))
-            pygame.draw.rect(self.img, (0, 0, 0), (15, 15, 40, 40), 2)
-        elif self.flag == 3:
-            self.img = pygame.Surface((70, 70))
-            self.img.fill((255, 255, 255))
-            pygame.draw.circle(self.img, (0, 0, 0), (35, 35), 20, 2)
-        else:
-            self.img = pygame.image.load(img)
-        self.rect = self.img.get_rect()
-        self.rect.x = x
-        self.rect.y = y
-
-    def draw(self):
-        screen.blit(self.img, self.rect)
-
-    def check(self, p):
-        if self.rect.left < p[0] < self.rect.right and self.rect.top < p[1] < self.rect.bottom:
-            return True
-        else:
-            return False
-
-    def change(self):
-        if self.flag == 0:
-            self.c = (random.randint(0, 255), random.randint(
-                0, 255), random.randint(0, 255))
-            self.img.fill(self.c)
+    def draw(self, surface):
+        surface.blit(self.image, self.rect)
 
 
-# Loading images of buttons
-pencil = Button(1, "tsis8\img\pencil.png", 820, 50)
-eraser = Button(1, "tsis8\img\eraser.png", 910, 50)
-randomizer = Button(4, "tsis8\img\erand.png", 820, 160)
-rec = Button(2, None, 820, 280)
-cir = Button(3, None, 910, 280)
+class Enemy(pg.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pg.image.load("tsis8\image\Enemy.png")
+        self.rect = self.image.get_rect()
+        self.rect.center = (random.randint(40, WIDTH - 40), 0)
 
-buttons = pygame.sprite.Group()
-# Adding random colors
-for i in range(0, 10, 2):
-    buttons.add(Button(0, (random.randint(0, 255), random.randint(
-        0, 255), random.randint(0, 255)), 820, 390 + i/2*110))
-    buttons.add(Button(0, (random.randint(0, 255), random.randint(
-        0, 255), random.randint(0, 255)), 910, 390 + i/2*110))
+    def update(self):
+        self.rect.move_ip(0, STEP)
+        if self.rect.top > HEIGHT:
+            self.top = 0
+            self.rect.center = (random.randint(30, 350), 0)
 
-buttons.add(cir)
-buttons.add(rec)
-buttons.add(pencil)
-buttons.add(eraser)
-buttons.add(randomizer)
-
-prev, cur = None, None
-screen.fill('white')
-
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            prev = pygame.mouse.get_pos()
-            if 799 < prev[0] < 1001:
-                for o in buttons:
-                    if o.check(prev):
-                        f = o.flag
-                        if f == 0:
-                            f = p_f
-                            c = o.c
-                        elif f == 1:
-                            p_f = 1
-                            d = 2
-                            if o == eraser:
-                                d = 30
-                                c = 'white'
-                        elif f == 2:
-                            p_f = f
-                        elif f == 3:
-                            p_f = f
-                        elif f == 4:
-                            for i in buttons:
-                                i.change()
-                        break
-        # Drawing figures with coordinates
-        if f == 1:
-            if event.type == pygame.MOUSEMOTION:
-                cur = pygame.mouse.get_pos()
-                if prev:
-                    pygame.draw.line(screen, c, prev, cur, d)
-                    prev = cur
-            if event.type == pygame.MOUSEBUTTONUP:
-                prev = None
-        elif f == 2:
-            if event.type == pygame.MOUSEBUTTONUP:
-                cur = pygame.mouse.get_pos()
-                if prev:
-                    pygame.draw.rect(screen, c, (min(prev[0], cur[0]), min(
-                        prev[1], cur[1]), abs(prev[0] - cur[0]), abs(prev[1] - cur[1])), 2)
-                    prev = cur
-        elif f == 3:
-            if event.type == pygame.MOUSEBUTTONUP:
-                cur = pygame.mouse.get_pos()
-                if prev:
-                    pygame.draw.circle(screen, c, (min(prev[0], cur[0]) + abs(prev[0] - cur[0])//2, min(
-                        prev[1], cur[1]) + abs(prev[1] - cur[1])//2), abs(prev[0] - cur[0])//2, 2)
-                    prev = cur
-
-    screen.blit(menue, (800, 0))
-    for o in buttons:
-        o.draw()
-    pygame.display.flip()
-
-    clock.tick(300)
+    def draw(self, surface):
+        surface.blit(self.image, self.rect)
 
 
-pygame.quit()
+class Coin(pg.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pg.transform.scale(pg.image.load("tsis8\image\coin.png"), (40, 40))
+        self.rect = self.image.get_rect()
+        self.rect.center = (random.randint(40, WIDTH - 40), -200)
+
+    def update(self):
+        self.rect.move_ip(0, STEP)
+        if self.rect.top > HEIGHT:
+            self.bottom = -200
+            self.rect.center = (random.randint(40, WIDTH - 40), -200)
+
+    def draw(self, surface):
+        surface.blit(self.image, self.rect)
+
+
+def fgame_over():
+    global paused
+    while paused:
+        clock.tick(5)
+        SURF.fill(RED)
+        SURF.blit(game_over, (30, 250))
+        SURF.blit(restart, (55, 300))
+        pg.display.update()
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                pg.quit()
+                quit()
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_r:
+                    global STEP
+                    global SCORE
+                    STEP = 5
+                    SCORE = 0
+                    paused = False
+                    main()
+                elif event.key == pg.K_q:
+                    pg.quit()
+                    quit()
+
+
+def main():
+    # # Variables 
+    global STEP
+    STEP = 5
+    SCORE = 0
+    # Sprites 
+    P1 = Player()
+    E1 = Enemy()
+    C1 = Coin()
+    # Groups 
+    enemies = pg.sprite.Group()
+    coins = pg.sprite.Group()
+    enemies.add(E1)
+    coins.add(C1)
+
+    # Music 
+    pg.mixer.music.load("tsis8\sound\W10_street racer_sound_background.wav")
+    pg.mixer.music.play(-1)
+    running = True
+    # Adding a new User event 
+    INC_SPEED = pg.USEREVENT + 1
+    pg.time.set_timer(INC_SPEED, 1000)
+    # Game Loop
+    while running:
+        clock.tick(60)
+        # Quit and increasing speed
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                running = False
+            if event.type == INC_SPEED:
+                STEP += 0.3
+        # Updating 
+        P1.update()
+        for enemy in enemies:
+            enemy.update()
+        C1.update()
+        # Collision 
+        if pg.sprite.spritecollideany(P1, enemies):
+            pg.mixer.music.pause()
+            pg.mixer.Sound("tsis8\sound\W10_street racer_sound_crash.wav").play()
+            global paused
+            paused = True
+            fgame_over()
+            for enemy in enemies:
+                enemy.kill()
+        if pg.sprite.spritecollideany(P1, coins):
+            SCORE += 1
+            pg.mixer.Sound("tsis8\sound\W10_street racer_sound_coin.wav").play()
+            # Deleting and adding New Coin 
+            for c in coins:
+                c.kill()
+            C1 = Coin()
+            coins.add(C1)
+        SURF.blit(bg, (0, 0))
+        # Drawing 
+        for enemy in enemies:
+            enemy.draw(SURF)
+        P1.draw(SURF)
+        C1.draw(SURF)
+        score_img = score_font.render(str(SCORE), True, BLACK)
+        SURF.blit(score_img, (10, 10))
+
+        # New Car, New Level 
+        if SCORE == 10 and len(enemies) < 2:
+            E = Enemy()
+            enemies.add(E)
+        pg.display.update()
+    pg.quit()
+    exit()
+
+
+main()
